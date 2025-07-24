@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>نظام محاسبة المبيعات</title>
+    <!-- Google Font Tajawal -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Design System + تخصيصات -->
+    <link rel="stylesheet" href="style.css" />
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script defer src="app.js"></script>
+  </head>
+  <body>
+    <!-- شريط علوي -->
+    <header class="topbar flex justify-between items-center px-16 py-8">
+      <div class="flex items-center gap-8">
+        <button
+          id="burgerBtn"
+          class="btn btn--secondary btn--sm"
+          aria-label="فتح القائمة الجانبية"
+        >
+          ☰
+        </button>
+        <h1 class="app-title">نظام محاسبة المبيعات</h1>
+      </div>
+      
+      <!-- التنقل العلوي للشاشات الكبيرة -->
+      <nav class="top-nav flex gap-8" aria-label="التنقل الرئيسي">
+        <button class="nav-btn active" data-section="dashboardSection" aria-label="لوحة التحكم">لوحة التحكم</button>
+        <button class="nav-btn" data-section="productsSection" aria-label="الأصناف">الأصناف</button>
+        <button class="nav-btn" data-section="transactionsSection" aria-label="المعاملات">المعاملات</button>
+        <button class="nav-btn" data-section="reportsSection" aria-label="التقارير">التقارير</button>
+      </nav>
+      
+      <button
+        id="themeToggleBtn"
+        class="btn btn--outline btn--sm"
+        aria-label="تبديل الوضع الليلي"
+      >🌙</button>
+    </header>
+
+    <!-- القائمة الجانبية للموبايل -->
+    <nav id="sidebar" class="sidebar" aria-label="القائمة الرئيسية">
+      <ul class="sidebar__list">
+        <li>
+          <button class="sidebar__link active" data-section="dashboardSection">لوحة التحكم</button>
+        </li>
+        <li>
+          <button class="sidebar__link" data-section="productsSection">الأصناف</button>
+        </li>
+        <li>
+          <button class="sidebar__link" data-section="transactionsSection">المعاملات</button>
+        </li>
+        <li>
+          <button class="sidebar__link" data-section="reportsSection">التقارير</button>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- طبقة تعتيم -->
+    <div id="overlay" class="overlay hidden" tabindex="-1"></div>
+
+    <!-- المحتوى الرئيسي -->
+    <main class="container my-8">
+      <!-- لوحة التحكم -->
+      <section id="dashboardSection" class="page-section">
+        <h2 class="mb-8">لوحة التحكم</h2>
+        <div class="card card__body mb-8 flex gap-16 flex-wrap">
+          <div class="status status--success" id="todaySales">مبيعات اليوم: 0</div>
+          <div class="status status--warning" id="todayPurchases">
+            مشتريات اليوم: 0
+          </div>
+          <div class="status status--info" id="todayNet">صافي الربح: 0</div>
+        </div>
+        <h3 class="mb-8">تنبيهات المخزون المنخفض</h3>
+        <div id="lowStockContainer" class="flex flex-col gap-8"></div>
+      </section>
+
+      <!-- الأصناف -->
+      <section id="productsSection" class="page-section hidden">
+        <div class="flex justify-between items-center mb-8">
+          <h2>الأصناف</h2>
+          <button
+            id="addProductBtn"
+            class="btn btn--primary"
+            aria-label="إضافة صنف"
+          >
+            + إضافة صنف
+          </button>
+        </div>
+        <div class="table-wrapper">
+          <table class="full-table" id="productsTable">
+            <thead>
+              <tr>
+                <th>الاسم</th>
+                <th>الفئة</th>
+                <th>سعر الشراء</th>
+                <th>سعر البيع</th>
+                <th>الكمية</th>
+                <th>حد إعادة الطلب</th>
+                <th>تعديل</th>
+                <th>حذف</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- المعاملات -->
+      <section id="transactionsSection" class="page-section hidden">
+        <h2 class="mb-8">المعاملات</h2>
+
+        <div class="tabs flex gap-8 mb-8" role="tablist">
+          <button
+            class="btn btn--secondary btn--sm tab-btn active"
+            data-tab="saleTab"
+            aria-label="بيع جديد"
+          >
+            بيع جديد
+          </button>
+          <button
+            class="btn btn--secondary btn--sm tab-btn"
+            data-tab="purchaseTab"
+            aria-label="شراء / توريد"
+          >
+            شراء / توريد
+          </button>
+        </div>
+
+        <!-- بيع -->
+        <div id="saleTab" class="tab-content">
+          <form id="salesForm" class="card card__body mb-8">
+            <div class="form-group">
+              <label for="saleDate" class="form-label">التاريخ</label>
+              <input
+                type="date"
+                id="saleDate"
+                class="form-control"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="saleProduct" class="form-label">الصنف</label>
+              <select id="saleProduct" class="form-control" required></select>
+            </div>
+            <div class="form-group">
+              <label for="saleQty" class="form-label">الكمية</label>
+              <input
+                type="number"
+                id="saleQty"
+                class="form-control"
+                min="1"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="salePrice" class="form-label">سعر البيع</label>
+              <input
+                type="number"
+                id="salePrice"
+                class="form-control"
+                min="0"
+                step="0.01"
+                required
+              />
+            </div>
+            <button type="submit" class="btn btn--primary mt-8">حفظ</button>
+          </form>
+        </div>
+
+        <!-- شراء -->
+        <div id="purchaseTab" class="tab-content hidden">
+          <form id="purchasesForm" class="card card__body mb-8">
+            <div class="form-group">
+              <label for="purchaseDate" class="form-label">التاريخ</label>
+              <input
+                type="date"
+                id="purchaseDate"
+                class="form-control"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="purchaseProduct" class="form-label">الصنف</label>
+              <select id="purchaseProduct" class="form-control" required></select>
+            </div>
+            <div class="form-group">
+              <label for="purchaseQty" class="form-label">الكمية</label>
+              <input
+                type="number"
+                id="purchaseQty"
+                class="form-control"
+                min="1"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="purchaseCost" class="form-label">تكلفة الشراء</label>
+              <input
+                type="number"
+                id="purchaseCost"
+                class="form-control"
+                min="0"
+                step="0.01"
+                required
+              />
+            </div>
+            <button type="submit" class="btn btn--primary mt-8">حفظ</button>
+          </form>
+        </div>
+      </section>
+
+      <!-- التقارير -->
+      <section id="reportsSection" class="page-section hidden">
+        <h2 class="mb-8">التقارير</h2>
+
+        <div class="flex gap-16 mb-8 flex-wrap">
+          <div class="form-group">
+            <label for="filterDate" class="form-label">تصفية بالتاريخ</label>
+            <input type="date" id="filterDate" class="form-control" />
+          </div>
+          <button id="clearFilterBtn" class="btn btn--secondary btn--sm mt-8" aria-label="مسح الفلتر">مسح</button>
+        </div>
+
+        <div class="table-wrapper mb-8">
+          <table class="full-table" id="transactionsTable">
+            <thead>
+              <tr>
+                <th>التاريخ</th>
+                <th>نوع</th>
+                <th>الصنف</th>
+                <th>الكمية</th>
+                <th>السعر/التكلفة</th>
+                <th>الإجمالي</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="chart-container mb-8" style="position: relative; height: 320px;">
+          <canvas id="lineChart"></canvas>
+        </div>
+        <button id="exportCsvBtn" class="btn btn--outline" aria-label="تصدير CSV">تصدير CSV</button>
+      </section>
+    </main>
+
+    <!-- مودال إضافة/تعديل صنف -->
+    <div id="productModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="productModalTitle">
+      <div class="modal__content card card__body">
+        <h3 id="productModalTitle" class="mb-8">إضافة صنف</h3>
+        <form id="productForm">
+          <input type="hidden" id="productId" />
+          <div class="form-group">
+            <label for="productName" class="form-label">الاسم</label>
+            <input type="text" id="productName" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label for="productCategory" class="form-label">الفئة</label>
+            <input type="text" id="productCategory" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label for="productCost" class="form-label">سعر الشراء</label>
+            <input type="number" id="productCost" class="form-control" min="0" step="0.01" required />
+          </div>
+          <div class="form-group">
+            <label for="productPrice" class="form-label">سعر البيع</label>
+            <input type="number" id="productPrice" class="form-control" min="0" step="0.01" required />
+          </div>
+          <div class="form-group">
+            <label for="productQty" class="form-label">الكمية المبدئية</label>
+            <input type="number" id="productQty" class="form-control" min="0" required />
+          </div>
+          <div class="form-group">
+            <label for="productReorder" class="form-label">حد إعادة الطلب</label>
+            <input type="number" id="productReorder" class="form-control" min="0" required />
+          </div>
+          <div class="flex gap-8 mt-8">
+            <button type="submit" class="btn btn--primary btn--full-width">حفظ</button>
+            <button id="cancelProductBtn" type="button" class="btn btn--secondary btn--full-width">إلغاء</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- مودال تأكيد حذف -->
+    <div id="confirmModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+      <div class="modal__content card card__body">
+        <h3 id="confirmTitle" class="mb-8">هل أنت متأكد؟</h3>
+        <p class="mb-8">لا يمكن التراجع عن هذه العملية.</p>
+        <div class="flex gap-8">
+          <button id="confirmYesBtn" class="btn btn--primary btn--full-width">نعم</button>
+          <button id="confirmNoBtn" class="btn btn--secondary btn--full-width">لا</button>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
